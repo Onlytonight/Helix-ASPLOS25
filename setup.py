@@ -1,5 +1,11 @@
 from setuptools import setup, find_packages
 
+# To ensure modules are imported correctly, the project's root directory must be in sys.path.
+# The recommended way is to install the project in editable mode:
+#   pip install -e .
+# If that fails (sometimes pip will not update path when using with conda), manually add the
+# project to your PYTHONPATH:
+#   export PYTHONPATH=$PYTHONPATH:/path/to/project
 setup(
     name="helix",
     version="1.0.0",

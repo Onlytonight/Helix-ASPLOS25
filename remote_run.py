@@ -13,15 +13,28 @@ target_path = "/home/xfusion/Helix-ASPLOS25"
 def kill_gpu_processes():
     # Get all GPU processes
     try:
-        # Get process IDs
-        cmd = "nvidia-smi | grep -v 'GPU' | grep -v 'Processes' | awk '{print $5}'"
+        # Get process IDs and their commands
+        cmd = "nvidia-smi --query-compute-apps=pid,process_name --format=csv,noheader,nounits"
         output = subprocess.check_output(cmd, shell=True, text=True)
 
-        # Filter out empty lines and convert to integers
-        pids = [int(pid) for pid in output.strip().split('\n') if pid.isdigit()]
+        # Parse the output to get PIDs and process names
+        pids_to_kill = []
+        for line in output.strip().split('\n'):
+            if line:
+                parts = line.split(', ')
+                if len(parts) >= 2:
+                    pid, process_name = parts[0], parts[1]
+                    # Skip Xorg processes
+                    if process_name == '/usr/lib/xorg/Xorg':
+                        print(f"Skipping Xorg process with PID {pid}")
+                        continue
+                    pids_to_kill.append(int(pid))
+                else:
+                    pid = parts[0]
+                    pids_to_kill.append(int(pid))
 
         # Kill each process
-        for pid in pids:
+        for pid in pids_to_kill:
             try:
                 os.kill(pid, 9)  # SIGKILL
                 print(f"Killed process {pid}")
@@ -30,7 +43,7 @@ def kill_gpu_processes():
             except Exception as e:
                 print(f"Error killing process {pid}: {e}")
 
-        return len(pids)
+        return len(pids_to_kill)
 
     except subprocess.CalledProcessError:
         print("Error running nvidia-smi")

@@ -138,7 +138,7 @@ def run_maxflow_host_online(
 
     # ------------------------------------- Init System ------------------------------------ #
     host_ip: str = get_local_ip()
-    assert host_ip.startswith("10"), "Local IP must be of form 10.xxx.xxx.xxx"
+    # assert host_ip.startswith("10"), "Local IP must be of form 10.xxx.xxx.xxx"
     llm_host.start_network_threads(CONFIG_BROADCAST_ADDR, host_ip, real_sys_config_file_name, "maxflow")
     time.sleep(20)
     print("[Python] Cluster initialization finished!")
@@ -328,7 +328,7 @@ def run_maxflow_host_offline(
 
     # ------------------------------------- Init System ------------------------------------ #
     host_ip: str = get_local_ip()
-    assert host_ip.startswith("10"), "Local IP must be of form 10.xxx.xxx.xxx"
+    # assert host_ip.startswith("10"), "Local IP must be of form 10.xxx.xxx.xxx"
     llm_host.start_network_threads(CONFIG_BROADCAST_ADDR, host_ip, real_sys_config_file_name, "maxflow")
     time.sleep(20)
     print("[Python] Cluster initialization finished!")

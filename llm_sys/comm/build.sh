@@ -14,7 +14,7 @@ cd build
 
 # Run CMake to configure the build environment
 echo "Configuring build with CMake..."
-cmake -DCMAKE_BUILD_TYPE=Release .. || { echo "CMake configuration failed"; exit 1; }
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/home/xfusion/anaconda3/envs/runtime/lib/python3.10/site-packages/torch/share/cmake/Torch .. || { echo "CMake configuration failed"; exit 1; }
 
 # Run Make to build the project with 8 threads
 echo "Building with Make..."

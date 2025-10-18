@@ -2,3 +2,4 @@
 cppzmq/
 libzmq/
 __pycache__/
+*.pyc

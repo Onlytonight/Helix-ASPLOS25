@@ -8,9 +8,6 @@ REMOTE_IPS=("192.168.10.23" "192.168.10.73" "192.168.10.90")
 # 远程服务器的 SSH 用户名
 REMOTE_USER="xfusion"
 
-# 远程服务器的 SSH 密码 (请谨慎使用，建议改用 SSH 密钥)
-REMOTE_PASSWORD="HW123hw123"
-
 # 远程服务器上 Git 仓库的路径
 REMOTE_REPO_PATH="/home/xfusion/Helix-ASPLOS25"
 
@@ -56,7 +53,8 @@ echo "正在远程服务器上拉取代码..."
 for IP in "${REMOTE_IPS[@]}"
 do
     echo "--- 正在连接到 $IP ---"
-    sshpass -p "$REMOTE_PASSWORD" ssh -o StrictHostKeyChecking=no "$REMOTE_USER"@"$IP" "cd $REMOTE_REPO_PATH && git pull"
+    # 因为配置了SSH密钥，现在可以直接连接，不再需要密码
+    ssh -o StrictHostKeyChecking=no "$REMOTE_USER"@"$IP" "cd $REMOTE_REPO_PATH && git pull"
 
     # 检查远程 git pull 是否成功
     if [ $? -eq 0 ]; then

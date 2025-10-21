@@ -1,0 +1,29 @@
+Config broadcast address: tcp://192.168.10.18:5000
+Worker IP address (local): 192.168.10.18
+[Receiver] Receiver thread has successfully started!
+[Receiver] Received machine configs from host!
+Machine ID: [0], IP: [192.168.10.18]
+Start Layer: -1, End Layer: -1
+In Nodes: 3 
+Out Nodes: 4 
+
+Machine ID: [1], IP: [192.168.10.18]
+Start Layer: 15, End Layer: 30
+In Nodes: 4 
+Out Nodes: 2 
+
+Machine ID: [2], IP: [192.168.10.23]
+Start Layer: 30, End Layer: 45
+In Nodes: 1 
+Out Nodes: 3 
+
+Machine ID: [3], IP: [192.168.10.73]
+Start Layer: 45, End Layer: 60
+In Nodes: 2 
+Out Nodes: 0 
+
+Machine ID: [4], IP: [192.168.10.90]
+Start Layer: 0, End Layer: 15
+In Nodes: 0 
+Out Nodes: 1 
+

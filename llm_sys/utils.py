@@ -23,6 +23,7 @@ def warm_up():
     x = torch.tensor([1, 2, 3])
     for i in range(100):
         x.cuda()
+    print("Utils: Warm up GPU done")
 
 
 def get_local_ip():

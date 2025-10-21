@@ -20,6 +20,7 @@ def kill_gpu_processes():
         # Parse the output to get PIDs and process names
         pids_to_kill = []
         for line in output.strip().split('\n'):
+            print(line)
             if line:
                 parts = line.split(', ')
                 if len(parts) >= 2:
@@ -90,7 +91,7 @@ def main():
     
     target_cmd = f"""
     cd {target_path}
-    conda run -n runtime --no-capture-output python {command}
+    conda run -n runtime --no-capture-output python {command} --debug-wrapper-scripts
     """
 
     refs = []

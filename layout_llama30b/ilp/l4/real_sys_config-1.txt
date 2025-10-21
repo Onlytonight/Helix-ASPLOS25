@@ -13,7 +13,7 @@ start_layer: 15
 end_layer: 30
 
 machine_id: 2
-ip_address: 192.168.10.90
+ip_address: 192.168.10.23
 in_nodes: 1
 out_nodes: 3
 start_layer: 30
@@ -27,7 +27,7 @@ start_layer: 45
 end_layer: 60
 
 machine_id: 4
-ip_address: 192.168.10.23
+ip_address: 192.168.10.90
 in_nodes: 0
 out_nodes: 1
 start_layer: 0

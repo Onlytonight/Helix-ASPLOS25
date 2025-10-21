@@ -120,10 +120,10 @@ def main():
         os.makedirs("./real_llama30b/helix_offline/l4", exist_ok=True)
         run_maxflow_host_offline(
             # model and machine
-            machine_num_dict={"L4": 8},
+            machine_num_dict={"L4x2": 4},
             model_name=ModelName.LLaMa30B,
             # cluster
-            complete_cluster_file_name="./config/cluster8-L4.ini",
+            complete_cluster_file_name="./config/cluster4-L4x2.ini",
             machine_profile_name="./config/machine_profiles.ini",
             # solution
             solution_file_name="./layout_llama30b/ilp/l4/ilp_sol.ini",

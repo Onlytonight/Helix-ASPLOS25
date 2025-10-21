@@ -3,3 +3,4 @@ cppzmq/
 libzmq/
 __pycache__/
 *.pyc
+launch_worker.sh

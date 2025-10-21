@@ -91,7 +91,7 @@ def main():
     
     target_cmd = f"""
     cd {target_path}
-    conda run -n runtime --no-capture-output -v python {command} 
+    conda run -n runtime --no-capture-output python {command} > output.log
     """
 
     refs = []

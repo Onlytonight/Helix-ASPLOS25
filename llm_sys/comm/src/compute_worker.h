@@ -115,6 +115,7 @@ void receiver_thread(const std::string &config_broadcast_addr, const std::string
     std::vector<std::string> input_addresses;
     for (const auto &id_ip: input_id_ip) {
         std::string address = "tcp://" + id_ip.second + ":" + std::to_string(BASE_PORT + current_machine.machine_id);
+        log("Receiver", "Input address: " + address);
         input_addresses.emplace_back(address);
     }
     PollingClient poll_client = PollingClient(context, input_addresses);
@@ -124,21 +125,24 @@ void receiver_thread(const std::string &config_broadcast_addr, const std::string
     std::unordered_set<int> input_machines_not_ready;
     for (const auto &id_ip: input_id_ip) {
         input_machines_not_ready.insert(id_ip.first);
+        log("Receiver", "Waiting for input machine id=[" + std::to_string(id_ip.first) + "] to initialize!");
     }
     // loop until all input machines are ready
     while (!input_machines_not_ready.empty()) {
         // receive a message
+        // log("Receiver", "Waiting for input message...");
         zmq::message_t input_msg;
         Header header = poll_client.poll_once(input_msg, 100);
         if (header.msg_type == MsgType::Invalid) {
+            // log("Receiver", "Received invalid message!");
             continue;
         }
         Assert(header.msg_type == MsgType::Init, "Received non-init message!");
-
+        
         // convert the message to string
         std::string input_msg_str(static_cast<char *>(input_msg.data()), input_msg.size());
         int input_machine_id = std::stoi(input_msg_str);
-
+        log("Receiver", "Received init message from machine id=[" + std::to_string(input_machine_id) + "]!");   
         // remove if still in the set
         if (input_machines_not_ready.find(input_machine_id) != input_machines_not_ready.end()) {
             input_machines_not_ready.erase(input_machine_id);
@@ -187,35 +191,51 @@ void receiver_thread(const std::string &config_broadcast_addr, const std::string
 
 
     // main loop
+    // 在 maxflow 调度器的主循环中
     if (scheduler_type == "maxflow") {
         while (true) {
+            // 添加日志
+            log("Receiver-Maxflow", "Waiting for message...");
+            
             // get the message
             zmq::message_t buffer_msg;
             Header header = poll_client.poll_once(buffer_msg, 10);
             if (header.msg_type == MsgType::Invalid) {
+                log("Receiver-Maxflow", "Received invalid message, continuing...");
                 continue;
             }
 
             if (header.msg_type == MsgType::Prompt || header.msg_type == MsgType::Decode) {
+                log("Receiver-Maxflow", "Received " + std::string(header.msg_type == MsgType::Prompt ? "Prompt" : "Decode") + 
+                    " request with ID: " + std::to_string(header.request_id));
                 // send the header and buffer to compute thread
                 Assert(header.server_id[header.current_stage] == current_machine_id, "Mis-routed request!");
                 recv_compute_queue.push(MessageData(header, std::move(buffer_msg)));
             } else if (header.msg_type == MsgType::Terminate) {
+                log("Receiver-Maxflow", "Received terminate signal, exiting...");
                 break;
             } else {
+                log("Receiver-Maxflow", "Unknown message type: " + std::to_string((int)header.msg_type));
                 Assert(false, "Unknown message type!");
             }
         }
-    } else if (scheduler_type == "swarm") {
+    } 
+    // 在 swarm 调度器的主循环中
+    else if (scheduler_type == "swarm") {
         while (true) {
+            // 添加日志
+            log("Receiver-Swarm", "Waiting for message...");
+            
             // get the message
             zmq::message_t buffer_msg;
             Header header = poll_client.poll_once(buffer_msg, 10);
             if (header.msg_type == MsgType::Invalid) {
+                log("Receiver-Swarm", "Received invalid message, continuing...");
                 continue;
             }
 
             if (header.msg_type == MsgType::Prompt) {
+                log("Receiver-Swarm", "Received Prompt request with ID: " + std::to_string(header.request_id));
                 // need to determine the layers to infer before sending into the queue
                 if (header.current_stage == 0) {
                     header.start_layer_idx[header.current_stage] = 0;
@@ -230,31 +250,42 @@ void receiver_thread(const std::string &config_broadcast_addr, const std::string
                 Assert(header.server_id[header.current_stage] == current_machine_id, "Mis-routed request!");
                 recv_compute_queue.push(MessageData(header, std::move(buffer_msg)));
             } else if (header.msg_type == MsgType::Decode) {
+                log("Receiver-Swarm", "Received Decode request with ID: " + std::to_string(header.request_id));
                 // send the header and buffer to compute thread
                 Assert(header.server_id[header.current_stage] == current_machine_id, "Mis-routed request!");
                 recv_compute_queue.push(MessageData(header, std::move(buffer_msg)));
             } else if (header.msg_type == MsgType::SwarmInfo) {
+                log("Receiver-Swarm", "Received SwarmInfo request with ID: " + std::to_string(header.request_id));
                 Assert(header.server_id[header.current_stage] == current_machine_id, "Mis-routed request!");
 
                 // increase the stage counter and send directly to the sender
                 header.current_stage++;
                 compute_send_queue.push(MessageData(header, std::move(buffer_msg)));
             } else if (header.msg_type == MsgType::Terminate) {
+                log("Receiver-Swarm", "Received terminate signal, exiting...");
                 break;
             } else {
+                log("Receiver-Swarm", "Unknown message type: " + std::to_string((int)header.msg_type));
                 Assert(false, "Unknown message type!");
             }
         }
-    } else if (scheduler_type == "random") {
+    }
+    // 在 random 调度器的主循环中
+    else if (scheduler_type == "random") {
         while (true) {
+            // 添加日志
+            log("Receiver-Random", "Waiting for message...");
+            
             // get the message
             zmq::message_t buffer_msg;
             Header header = poll_client.poll_once(buffer_msg, 10);
             if (header.msg_type == MsgType::Invalid) {
+                log("Receiver-Random", "Received invalid message, continuing...");
                 continue;
             }
 
             if (header.msg_type == MsgType::Prompt) {
+                log("Receiver-Random", "Received Prompt request with ID: " + std::to_string(header.request_id));
                 // need to determine the layers to infer before sending into the queue
                 if (header.current_stage == 0) {
                     header.start_layer_idx[header.current_stage] = 0;
@@ -269,16 +300,20 @@ void receiver_thread(const std::string &config_broadcast_addr, const std::string
                 Assert(header.server_id[header.current_stage] == current_machine_id, "Mis-routed request!");
                 recv_compute_queue.push(MessageData(header, std::move(buffer_msg)));
             } else if (header.msg_type == MsgType::Decode) {
+                log("Receiver-Random", "Received Decode request with ID: " + std::to_string(header.request_id));
                 // send the header and buffer to compute thread
                 Assert(header.server_id[header.current_stage] == current_machine_id, "Mis-routed request!");
                 recv_compute_queue.push(MessageData(header, std::move(buffer_msg)));
             } else if (header.msg_type == MsgType::Terminate) {
+                log("Receiver-Random", "Received terminate signal, exiting...");
                 break;
             } else {
+                log("Receiver-Random", "Unknown message type: " + std::to_string((int)header.msg_type));
                 Assert(false, "Unknown message type!");
             }
         }
-    } else {
+    }
+    else {
         Assert(false, "Unknown scheduler type!");
     }
 }
@@ -534,15 +569,48 @@ void sender_thread(const std::string &worker_ip) {
     }
 
     // initial the output sockets
+    // std::unordered_map<int, std::unique_ptr<PollServer>> output_sockets;
+    // for (const auto &id_ip: output_id_ip) {
+    //     std::string bind_address = "tcp://" + worker_ip + ":" + std::to_string(BASE_PORT + id_ip.first);
+    //     log("Sender", "Binding to address: " + bind_address);
+    //     output_sockets[id_ip.first] = std::make_unique<PollServer>(context, bind_address);
+    // }
+
+    // initial the output sockets
     std::unordered_map<int, std::unique_ptr<PollServer>> output_sockets;
     for (const auto &id_ip: output_id_ip) {
         std::string bind_address = "tcp://" + worker_ip + ":" + std::to_string(BASE_PORT + id_ip.first);
-        output_sockets[id_ip.first] = std::make_unique<PollServer>(context, bind_address);
+        log("Sender", "Binding to address: " + bind_address);
+        
+        try {
+            // 尝试创建 PollServer 对象
+            output_sockets[id_ip.first] = std::make_unique<PollServer>(context, bind_address);
+            log("Sender", "Successfully created PollServer for machine id=[" + std::to_string(id_ip.first) + "]");
+        } catch (const zmq::error_t& e) {
+            // 捕获 ZeroMQ 相关错误
+            log("Sender", "Failed to create PollServer for machine id=[" + std::to_string(id_ip.first) + 
+                "], address=[" + bind_address + "], error: " + std::string(e.what()));
+            Assert(false, "Failed to create PollServer for machine id=" + std::to_string(id_ip.first) + 
+                ", error: " + std::string(e.what()));
+        } catch (const std::exception& e) {
+            // 捕获其他标准异常
+            log("Sender", "Failed to create PollServer for machine id=[" + std::to_string(id_ip.first) + 
+                "], address=[" + bind_address + "], error: " + std::string(e.what()));
+            Assert(false, "Failed to create PollServer for machine id=" + std::to_string(id_ip.first) + 
+                ", error: " + std::string(e.what()));
+        } catch (...) {
+            // 捕获所有其他异常
+            log("Sender", "Failed to create PollServer for machine id=[" + std::to_string(id_ip.first) + 
+                "], address=[" + bind_address + "], unknown error occurred");
+            Assert(false, "Failed to create PollServer for machine id=" + std::to_string(id_ip.first) + 
+                ", unknown error occurred");
+        }
     }
-
+    log("Sender", "Successfully bind to output ports!");
     // initialization
     // wait until the input ports are initialized (i.e. received Init message from all input machines)
     while (!input_port_initialized) {
+        log("Sender", "Waiting for input ports to be initialized!");
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     log("Sender", "Start pushing init messages to the next stage!");
@@ -557,6 +625,7 @@ void sender_thread(const std::string &worker_ip) {
     while (!stop_sending_init) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         for (const auto &id_ip: output_id_ip) {
+            log("Sender", "Sending init message to machine: id=[" + std::to_string(id_ip.first) + "]");
             zmq::message_t init_msg(init_msg_str.data(), init_msg_str.size());
             output_sockets[id_ip.first]->send(init_header, init_msg);
         }
@@ -575,27 +644,43 @@ void sender_thread(const std::string &worker_ip) {
     log("Sender", "Successfully finished initialization, entering main loop!");
     sender_in_main_loop = true;
 
-    if (scheduler_type == "maxflow") {
-        while (true) {
-            // get all messages
-            std::vector<MessageData> new_messages = compute_send_queue.pop_all();
+    // 在 maxflow 调度器的主循环中
+if (scheduler_type == "maxflow") {
+    while (true) {
+        // 添加日志
+        log("Sender-Maxflow", "Checking for messages to send...");
+        
+        // get all messages
+        std::vector<MessageData> new_messages = compute_send_queue.pop_all();
+        
+        if (new_messages.empty()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
+        }
+        
+        log("Sender-Maxflow", "Processing " + std::to_string(new_messages.size()) + " messages");
 
-            for (auto &message: new_messages) {
-                if (message.header.msg_type == MsgType::Prompt || message.header.msg_type == MsgType::Decode) {
-                    // for prompt and decode, just follow the route
-                    int current_stage = message.header.current_stage;
-                    int next_server_id = message.header.server_id[current_stage];
+        for (auto &message: new_messages) {
+            if (message.header.msg_type == MsgType::Prompt || message.header.msg_type == MsgType::Decode) {
+                log("Sender-Maxflow", "Sending " + std::string(message.header.msg_type == MsgType::Prompt ? "Prompt" : "Decode") +
+                    " request with ID: " + std::to_string(message.header.request_id));
+                // for prompt and decode, just follow the route
+                int current_stage = message.header.current_stage;
+                int next_server_id = message.header.server_id[current_stage];
 
-                    // send the request following the route
-                    output_sockets[next_server_id]->send(message.header, message.buffer_msg);
-                } else if (message.header.msg_type == MsgType::Terminate) {
-                    return;
-                } else {
-                    Assert(false, "Bad message type: " + std::to_string((int) message.header.msg_type));
-                }
+                // send the request following the route
+                output_sockets[next_server_id]->send(message.header, message.buffer_msg);
+            } else if (message.header.msg_type == MsgType::Terminate) {
+                log("Sender-Maxflow", "Received terminate signal, exiting...");
+                return;
+            } else {
+                log("Sender-Maxflow", "Bad message type: " + std::to_string((int) message.header.msg_type));
+                Assert(false, "Bad message type: " + std::to_string((int) message.header.msg_type));
             }
         }
-    } else if (scheduler_type == "swarm") {
+    }
+}
+    else if (scheduler_type == "swarm") {
         // initialize the swarm scheduler
         std::vector<int> out_ids;
         for (const auto &id_ip: output_id_ip) {

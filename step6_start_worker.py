@@ -6,12 +6,14 @@ from llm_sys.worker import run_worker
 
 def main():
     # parse arguments
-    if len(sys.argv) < 3:
-        print("Usage: python step6_start_worker.py <llama30b/llama70b> <scheduling_method> <max_vram_usage>")
-        print("  scheduling_method: maxflow | swarm | random")
-        return
-    model_name = sys.argv[1]
-    scheduling_method = sys.argv[2]
+    # if len(sys.argv) < 3:
+    #     print("Usage: python step6_start_worker.py <llama30b/llama70b> <scheduling_method> <max_vram_usage>")
+    #     print("  scheduling_method: maxflow | swarm | random")
+    #     return
+    # model_name = sys.argv[1]
+    model_name = "llama30b"
+    # scheduling_method = sys.argv[2]
+    scheduling_method = "maxflow"
     if len(sys.argv) == 4:
         max_vram_usage = float(sys.argv[3])
     else:

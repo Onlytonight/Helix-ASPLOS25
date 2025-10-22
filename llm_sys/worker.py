@@ -23,8 +23,7 @@ def init_engine(layer_ids, model_name, vram_usage=0.8):
     engine_args = EngineArgs(model=model_name, block_size=16,
                              load_format="dummy", enforce_eager=True,
                              swap_space=32, max_num_batched_tokens=4096,
-                             gpu_memory_utilization=vram_usage,
-                             tensor_parallel_size=2)
+                             gpu_memory_utilization=vram_usage)
 
     engine = PipelineStageEngine.from_engine_args(engine_args, layer_ids)
     return engine

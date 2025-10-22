@@ -97,6 +97,7 @@ def main():
     refs = []
     for node in ray.nodes():
         if 'GPU' in node['Resources'] and node['Resources']['GPU'] > 0:
+            print(node)
             # for worker nodes with GPUs
             launch_remote_fn = ray.remote(num_gpus=2)(launch_script)
             ref = launch_remote_fn.remote(target_cmd)
